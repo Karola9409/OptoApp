@@ -10,7 +10,6 @@ namespace OptoApi.Validators
         }
         public bool IsValid { get; }
         public string ErrorMessage { get; }
-
     }
 }
 
