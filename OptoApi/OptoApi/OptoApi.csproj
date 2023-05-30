@@ -16,9 +16,11 @@
   <ItemGroup>
     <None Remove="Models\" />
     <None Remove="Validators\" />
+    <None Remove="ApiModels\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
     <Folder Include="Validators\" />
+    <Folder Include="ApiModels\" />
   </ItemGroup>
 </Project>
