@@ -1,6 +1,8 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using OptoApi.ApiModels;
+using OptoApi.Models;
+using OptoApi.Services;
 
 namespace OptoApi.Controllers;
 
@@ -8,14 +10,28 @@ namespace OptoApi.Controllers;
 [Route("[controller]")]
 public class ProductsController : ControllerBase
 {
-    public ProductsController()
-    {
-    }
+    private readonly ProductsService _productsService;
+    private readonly ILogger<ProductsController> _logger;
 
+    public ProductsController(ILogger<ProductsController> logger)
+    {
+        _productsService = new ProductsService();
+        _logger = logger;
+    }
+   
     [HttpGet("GetAll")]
     public IActionResult GetAllProducts()
     {
-        return Ok();
+        try
+        {
+            var products = _productsService.GetAllProducts();
+            return Ok(products);
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected exception");
+            return StatusCode(500, ex.Message);
+        }   
     }
 
     [HttpGet("Get/{id}")]
