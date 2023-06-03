@@ -29,7 +29,7 @@ namespace OptoApi.Validators
             }
             if (product.GrossPrice <= 0)
             {
-                return new ValidationResult(false, "Product gross price must be greater than or equal 0");
+                return new ValidationResult(false, "Product gross price must be greater than 0");
             }
             if (ValidVatPercentages.Contains(product.VatPercentage) is false)
             {

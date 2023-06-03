@@ -6,7 +6,7 @@ namespace OptoApi.Services
 {
     public class ProductsService
     {
-        private List<Product> ProductsList = new List<Product>
+        private static List<Product> ProductsList = new List<Product>
         {
             new Product(1,"Frame","Corrective frame", 1, 249.99m, 8,"https://example.com/photo" ),
             new Product(2,"Frame","Sunglasses", 1, 149.99m, 23,"https://example.com/photo" ),
@@ -23,6 +23,20 @@ namespace OptoApi.Services
         {
             var result = ProductsList.Find(x => x.Id == id);
             return result;
+        }
+
+        public bool Exists(string name)
+        {
+            var nameTrimmed = name.ToLower().Trim();
+            var result = ProductsList.Any(x => x.Name.ToLower() == nameTrimmed);
+            return result;
+        }
+        public int AddProduct(Product product)
+        {
+            var productId = ProductsList.Max(x => x.Id)+1;
+            product.Id = productId;
+            ProductsList.Add(product);
+            return productId;
         }
     }
 }
