@@ -18,5 +18,11 @@ namespace OptoApi.Services
         {
             return ProductsList;
         }
+
+        public Product? GetProduct(int id)
+        {
+            var result = ProductsList.Find(x => x.Id == id);
+            return result;
+        }
     }
 }

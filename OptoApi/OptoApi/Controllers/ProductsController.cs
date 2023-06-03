@@ -37,7 +37,21 @@ public class ProductsController : ControllerBase
     [HttpGet("Get/{id}")]
     public IActionResult GetProduct(int id)
     {
-        return Ok();
+        try
+        {
+            var result = _productsService.GetProduct(id);
+            if (result == null)
+            {
+                return NotFound($"404, Product with id {id} not found");
+            };
+            return Ok(result);
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected exception");
+            return StatusCode(500, ex.Message);
+        }
+
     }
 
     [HttpPost("Add")]
