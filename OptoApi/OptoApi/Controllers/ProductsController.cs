@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using OptoApi.ApiModels;
+using OptoApi.Exceptions;
 using OptoApi.Models;
 using OptoApi.Services;
 using OptoApi.Validators;
@@ -96,7 +97,40 @@ public class ProductsController : ControllerBase
     [HttpPut("Update/{id}")]
     public IActionResult UpdateProduct([FromBody] ApiRequestProduct product, int id)
     {
-        return Ok();
+        try
+        {
+            var result = _productsService.GetProduct(id);
+            if (result == null)
+            {
+                return NotFound($"404, Product with id {id} not found");
+            };
+            var productToUpdate = new Product(
+                id,
+                product.Name,
+                product.Description,
+                product.StockCount,
+                product.GrossPrice,
+                product.VatPercentage,
+                product.PhotoUrl);
+
+            var validationResult = _productValidator.IsValid(productToUpdate);
+            if (validationResult.IsValid is false)
+            {
+                return BadRequest($"Product is invalid: {validationResult.ErrorMessage}");
+            }
+            _productsService.UpdateProduct(productToUpdate);
+            return Ok();
+        }
+        catch(ProductNameDuplicateException)
+        {
+            return BadRequest("400, Product with this name already exist");
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected exception");
+            return StatusCode(500, ex.Message);
+        }
+        
     }
 
     [HttpDelete("Remove/{id}")]

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Xml.Linq;
+using OptoApi.Exceptions;
 using OptoApi.Models;
 
 namespace OptoApi.Services
@@ -31,12 +32,33 @@ namespace OptoApi.Services
             var result = ProductsList.Any(x => x.Name.ToLower() == nameTrimmed);
             return result;
         }
+
         public int AddProduct(Product product)
         {
             var productId = ProductsList.Max(x => x.Id)+1;
             product.Id = productId;
             ProductsList.Add(product);
             return productId;
+        }
+
+        public void UpdateProduct(Product product)
+        {
+            var productToUpdate = ProductsList.Find(x => x.Id == product.Id);
+           
+            if (product.Name == productToUpdate?.Name)
+            {
+                ProductsList.Remove(productToUpdate!);
+                ProductsList.Add(product);
+                return;
+            }
+            if (!Exists(product.Name))
+            {
+                ProductsList.Remove(productToUpdate!);
+                ProductsList.Add(product);
+                return;
+            }
+            throw new ProductNameDuplicateException();
+
         }
     }
 }
