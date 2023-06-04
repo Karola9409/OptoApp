@@ -45,20 +45,25 @@ namespace OptoApi.Services
         {
             var productToUpdate = ProductsList.Find(x => x.Id == product.Id);
            
-            if (product.Name == productToUpdate?.Name)
-            {
-                ProductsList.Remove(productToUpdate!);
-                ProductsList.Add(product);
-                return;
-            }
-            if (!Exists(product.Name))
+            if (product.Name == productToUpdate?.Name || !Exists(product.Name))
             {
                 ProductsList.Remove(productToUpdate!);
                 ProductsList.Add(product);
                 return;
             }
             throw new ProductNameDuplicateException();
+        }
 
+        public bool RemoveProduct(int productId)
+        {
+            var productToRemove = ProductsList.Find(x => x.Id == productId);
+            
+            if(productToRemove != null)
+            {
+                ProductsList.Remove(productToRemove);
+                return true;
+            }
+            return false;
         }
     }
 }

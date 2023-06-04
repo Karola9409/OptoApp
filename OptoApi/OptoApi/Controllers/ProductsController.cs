@@ -136,7 +136,21 @@ public class ProductsController : ControllerBase
     [HttpDelete("Remove/{id}")]
     public IActionResult RemoveProduct(int id)
     {
-        return Ok();
+        try
+        {
+            var result = _productsService.GetProduct(id);
+            if (result == null)
+            {
+                return NotFound($"404, Product with id {id} not found");
+            };
+            var removed = _productsService.RemoveProduct(id);
+            return Ok(removed);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected exception");
+            return StatusCode(500, ex.Message);
+        }
     }
 }
 
