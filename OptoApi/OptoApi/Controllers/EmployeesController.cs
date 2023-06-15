@@ -11,7 +11,6 @@ namespace OptoApi.Controllers
     [ApiController]
     [Route("[controller]")]
     public class EmployeesController : ControllerBase
-
     {
         private readonly EmployeesService _employeesService;
         private readonly EmployeeValidator _employeeValidator;
@@ -29,7 +28,8 @@ namespace OptoApi.Controllers
         {
             try
             {
-                return Ok();
+                var employees = _employeesService.GetAllEmployees();
+                return Ok(employees);
             }
             catch (Exception ex)
             {
@@ -50,7 +50,6 @@ namespace OptoApi.Controllers
                 _logger.LogError(ex, "Unexpected exception");
                 return StatusCode(500, ex.Message);
             }
-
         }
 
         [HttpPost("Add")]
@@ -65,7 +64,6 @@ namespace OptoApi.Controllers
                 _logger.LogError(ex, "Unexpected exception");
                 return StatusCode(500, ex.Message);
             }
-
         }
 
         [HttpPut("Update/{id}")]
@@ -80,7 +78,6 @@ namespace OptoApi.Controllers
                 _logger.LogError(ex, "Unexpected exception");
                 return StatusCode(500, ex.Message);
             }
-
         }
 
         [HttpDelete("Remove/{id}")]

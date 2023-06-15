@@ -35,7 +35,7 @@ namespace OptoApi.Services
 
         public int AddProduct(Product product)
         {
-            var productId = ProductsList.Max(x => x.Id)+1;
+            var productId = ProductsList.Max(x => x.Id) + 1;
             product.Id = productId;
             ProductsList.Add(product);
             return productId;
@@ -44,7 +44,7 @@ namespace OptoApi.Services
         public void UpdateProduct(Product product)
         {
             var productToUpdate = ProductsList.Find(x => x.Id == product.Id);
-           
+
             if (product.Name == productToUpdate?.Name || !Exists(product.Name))
             {
                 ProductsList.Remove(productToUpdate!);
@@ -57,8 +57,8 @@ namespace OptoApi.Services
         public bool RemoveProduct(int productId)
         {
             var productToRemove = ProductsList.Find(x => x.Id == productId);
-            
-            if(productToRemove != null)
+
+            if (productToRemove != null)
             {
                 ProductsList.Remove(productToRemove);
                 return true;
