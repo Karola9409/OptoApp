@@ -3,7 +3,7 @@ namespace OptoApi.Models
 {
     public class Employee
     {
-        public Employee(int employeeId, string firstName, string lastName, string email, EmployeeRole employeeRole, bool isDeleted)
+        public Employee(int employeeId, string firstName, string lastName, string email, EmployeeRole employeeRole, bool isDeleted = false)
         {
             EmployeeId = employeeId;
             FirstName = firstName;
