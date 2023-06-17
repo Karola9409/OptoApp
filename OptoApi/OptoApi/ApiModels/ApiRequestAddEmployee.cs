@@ -3,9 +3,9 @@ using OptoApi.Models;
 
 namespace OptoApi.ApiModels
 {
-    public class ApiRequestEmployee
+    public class ApiRequestAddEmployee
     {
-        public ApiRequestEmployee (string firstName, string lastName, string email, EmployeeRole employeeRole)
+        public ApiRequestAddEmployee (string firstName, string lastName, string email, EmployeeRole employeeRole)
         {
             FirstName = firstName;
             LastName = lastName;
