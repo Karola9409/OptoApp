@@ -19,6 +19,12 @@ namespace OptoApi.Services
             return EmployeeList;
         }
 
+        public Employee? GetEmployee(int id)
+        {
+            var result = EmployeeList.Find(x => x.EmployeeId == id);
+            return result;
+        }
+
     }
 }
 
