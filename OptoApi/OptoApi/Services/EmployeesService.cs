@@ -39,6 +39,17 @@ namespace OptoApi.Services
             EmployeeList.Remove(employeeToUpdate!);
             EmployeeList.Add(employee);
         }
+        public bool RemoveEmployee(int employeeId)
+        {
+            var employeeToRemove = EmployeeList.Find(x => x.EmployeeId == employeeId);
+
+            if (employeeToRemove is not null)
+            {
+                employeeToRemove.IsDeleted = true;
+                return true;
+            }
+            return false;
+        }
     }
 }
 

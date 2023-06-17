@@ -23,7 +23,7 @@ namespace OptoApi.Models
 
         public EmployeeRole EmployeeRole { get; }
 
-        public bool IsDeleted { get; }
+        public bool IsDeleted { get; set; }
     }
 }
 

@@ -123,7 +123,13 @@ namespace OptoApi.Controllers
         {
             try
             {
-                return Ok();
+                var result = _employeesService.GetEmployee(id);
+                if (result == null)
+                {
+                    return NotFound($"404, Employee with id {id} not found");
+                };
+                var removed = _employeesService.RemoveEmployee(id);
+                return Ok(removed);
             }
             catch (Exception ex)
             {
