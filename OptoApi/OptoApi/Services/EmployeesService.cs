@@ -32,7 +32,13 @@ namespace OptoApi.Services
             EmployeeList.Add(employee);
             return employeeId;
         }
-
+        public void UpdateEmployee(Employee employee)
+        {
+            var employeeToUpdate = EmployeeList.Find(x => x.EmployeeId == employee.EmployeeId);
+            
+            EmployeeList.Remove(employeeToUpdate!);
+            EmployeeList.Add(employee);
+        }
     }
 }
 

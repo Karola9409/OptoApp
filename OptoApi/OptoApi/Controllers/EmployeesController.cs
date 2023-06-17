@@ -59,16 +59,16 @@ namespace OptoApi.Controllers
         }
 
         [HttpPost("Add")]
-        public IActionResult AddEmployee([FromBody] ApiRequestEmployee employee)
+        public IActionResult AddEmployee([FromBody] ApiRequestAddEmployee addEmployee)
         {
             try
             {
                 var employeeToAdd = new Employee(
                     0,
-                    employee.FirstName,
-                    employee.LastName,
-                    employee.Email,
-                    employee.EmployeeRole); 
+                    addEmployee.FirstName,
+                    addEmployee.LastName,
+                    addEmployee.Email,
+                    addEmployee.EmployeeRole); 
                 
                 var validationResult = _employeeValidator.IsValid(employeeToAdd);
                 if (validationResult.IsValid is false)
@@ -86,10 +86,29 @@ namespace OptoApi.Controllers
         }
 
         [HttpPut("Update/{id}")]
-        public IActionResult UpdateEmployee([FromBody] ApiRequestEmployee employee, int id)
+        public IActionResult UpdateEmployee([FromBody] ApiRequestUpdateEmployee employee, int id)
         {
             try
             {
+                var existingEmployee = _employeesService.GetEmployee(id);
+                if (existingEmployee == null )
+                {
+                    return NotFound($"404, Employee with id {id} not found");
+                };
+                var employeeToUpdate = new Employee(
+                    id,
+                    existingEmployee.FirstName,
+                    employee.LastName,
+                    employee.Email,
+                    employee.EmployeeRole,
+                    existingEmployee.IsDeleted);
+                
+                var validationResult = _employeeValidator.IsValid(employeeToUpdate);
+                if (validationResult.IsValid is false)
+                {
+                    return BadRequest($"Employee is invalid: {validationResult.ErrorMessage}");
+                }
+                _employeesService.UpdateEmployee(employeeToUpdate);
                 return Ok();
             }
             catch (Exception ex)
