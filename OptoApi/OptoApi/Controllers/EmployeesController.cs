@@ -39,11 +39,16 @@ namespace OptoApi.Controllers
         }
 
         [HttpGet("Get/{id}")]
-        public IActionResult GetEmployees(int id)
+        public IActionResult GetEmployee(int id)
         {
             try
             {
-                return Ok();
+                var result = _employeesService.GetEmployee(id);
+                if (result == null)
+                {
+                    return NotFound($"404, Employee with id {id} not found");
+                };
+                return Ok(result);
             }
             catch (Exception ex)
             {
