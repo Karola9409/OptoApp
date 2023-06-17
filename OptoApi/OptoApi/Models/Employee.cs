@@ -13,7 +13,7 @@ namespace OptoApi.Models
             IsDeleted = isDeleted;
         }
 
-        public int EmployeeId { get; }
+        public int EmployeeId { get; set; }
 
         public string FirstName { get; }
 

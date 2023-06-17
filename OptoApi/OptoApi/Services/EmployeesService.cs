@@ -24,6 +24,14 @@ namespace OptoApi.Services
             var result = EmployeeList.Find(x => x.EmployeeId == id);
             return result;
         }
+        
+        public int AddEmployee(Employee employee)
+        {
+            var employeeId = EmployeeList.Max(x => x.EmployeeId) + 1;
+            employee.EmployeeId = employeeId;
+            EmployeeList.Add(employee);
+            return employeeId;
+        }
 
     }
 }

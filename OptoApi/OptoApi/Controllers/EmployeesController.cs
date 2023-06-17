@@ -6,6 +6,7 @@ using OptoApi.Models;
 using OptoApi.Validators;
 using OptoApi.ApiModels;
 
+
 namespace OptoApi.Controllers
 {
     [ApiController]
@@ -62,7 +63,20 @@ namespace OptoApi.Controllers
         {
             try
             {
-                return Ok();
+                var employeeToAdd = new Employee(
+                    0,
+                    employee.FirstName,
+                    employee.LastName,
+                    employee.Email,
+                    employee.EmployeeRole); 
+                
+                var validationResult = _employeeValidator.IsValid(employeeToAdd);
+                if (validationResult.IsValid is false)
+                {
+                    return BadRequest($"Employee is invalid: {validationResult.ErrorMessage}");
+                }
+                var employeeId = _employeesService.AddEmployee(employeeToAdd);
+                return Ok(employeeId);
             }
             catch (Exception ex)
             {
