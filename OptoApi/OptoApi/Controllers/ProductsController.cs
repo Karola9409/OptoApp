@@ -12,15 +12,18 @@ namespace OptoApi.Controllers;
 [Route("[controller]")]
 public class ProductsController : ControllerBase
 {
-    private readonly ProductsService _productsService;
+    private readonly IProductsService _productsService;
     private readonly ILogger<ProductsController> _logger;
 
     private readonly ProductValidator _productValidator;
 
-    public ProductsController(ILogger<ProductsController> logger)
+    public ProductsController(
+        ILogger<ProductsController> logger,
+        IProductsService productsService,
+        ProductValidator productValidator)
     {
-        _productsService = new ProductsService();
-        _productValidator = new ProductValidator();
+        _productsService = productsService;
+        _productValidator = productValidator;
         _logger = logger;
     }
    
