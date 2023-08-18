@@ -13,14 +13,17 @@ namespace OptoApi.Controllers
     [Route("[controller]")]
     public class EmployeesController : ControllerBase
     {
-        private readonly EmployeesService _employeesService;
+        private readonly IEmployeesService _employeesService;
         private readonly EmployeeValidator _employeeValidator;
         private readonly ILogger<EmployeesController> _logger;
 
-        public EmployeesController(ILogger<EmployeesController> logger)
+        public EmployeesController(
+            ILogger<EmployeesController> logger,
+            IEmployeesService employeesService,
+            EmployeeValidator employeeValidator)
         {
-            _employeesService = new EmployeesService();
-            _employeeValidator = new EmployeeValidator();
+            _employeesService = employeesService;
+            _employeeValidator = employeeValidator;
             _logger = logger;
         }
 

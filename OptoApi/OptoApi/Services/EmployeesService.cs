@@ -1,55 +1,80 @@
-﻿using System;
+using Dapper;
+using Microsoft.Extensions.Options;
+using Npgsql;
 using OptoApi.Models;
+using OptoApi.Options;
+using OptoApi.Sql;
 
-namespace OptoApi.Services
+namespace OptoApi.Services;
+
+public class EmployeesService : IEmployeesService
 {
-    public class EmployeesService
+    private readonly IOptions<DatabaseOptions> _databaseOptions;
+
+    public EmployeesService(IOptions<DatabaseOptions> databaseOptions)
     {
-        private static List<Employee> EmployeeList = new List<Employee>
-        {
-            new Employee(1,"Kasia","Nowak", "kasia.nowak@optoapi.com", EmployeeRole.Boss),
-            new Employee(2,"Adam","Kowalski", "adam.kowalski@optoapi.com", EmployeeRole.Manager),
-            new Employee(3,"Ingeborga","Adamiec", "ingeborga.adamiec@optoapi.com", EmployeeRole.Optician),
-            new Employee(4,"Piotr","Waciak", "piotr.waciak@optoapi.com", EmployeeRole.Optometrist),
-            new Employee(5,"Agata","Majewska", "agata.majewska@optoapi.com",EmployeeRole.Seller),
-        };
+        _databaseOptions = databaseOptions;
+    }
 
-        public List<Employee> GetAllEmployees()
-        {
-            return EmployeeList;
-        }
+    public List<Employee> GetAllEmployees()
+    {
+        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
 
-        public Employee? GetEmployee(int id)
-        {
-            var result = EmployeeList.Find(x => x.EmployeeId == id);
-            return result;
-        }
-        
-        public int AddEmployee(Employee employee)
-        {
-            var employeeId = EmployeeList.Max(x => x.EmployeeId) + 1;
-            employee.EmployeeId = employeeId;
-            EmployeeList.Add(employee);
-            return employeeId;
-        }
-        public void UpdateEmployee(Employee employee)
-        {
-            var employeeToUpdate = EmployeeList.Find(x => x.EmployeeId == employee.EmployeeId);
-            
-            EmployeeList.Remove(employeeToUpdate!);
-            EmployeeList.Add(employee);
-        }
-        public bool RemoveEmployee(int employeeId)
-        {
-            var employeeToRemove = EmployeeList.Find(x => x.EmployeeId == employeeId);
+        var result = connection.Query<Employee>(EmployeesSql.GetAllEmployees);
 
-            if (employeeToRemove is not null)
+        return result.AsList();
+    }
+
+    public Employee? GetEmployee(int id)
+    {
+        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
+
+        var result = connection.QueryFirstOrDefault<Employee>(EmployeesSql.GetEmployee, new
+        {
+            EmployeeId = id
+        });
+        return result;
+    }
+
+    public int AddEmployee(Employee employee)
+    {
+        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
+
+        var result = connection.Execute(EmployeesSql.AddEmployee, new
+        {
+            employee.FirstName,
+            employee.LastName,
+            employee.Email,
+            employee.EmployeeRole,
+            employee.IsDeleted
+        });
+        return result;
+    }
+
+    public void UpdateEmployee(Employee employee)
+    {
+        {
+            using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
+
+            connection.Execute(EmployeesSql.UpdateEmployee, new
             {
-                employeeToRemove.IsDeleted = true;
-                return true;
-            }
-            return false;
+                employee.EmployeeId,
+                employee.FirstName,
+                employee.LastName,
+                employee.Email,
+                employee.EmployeeRole,
+                employee.IsDeleted
+            });
         }
     }
-}
+    public bool RemoveEmployee(int employeeId)
+    {
+        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
 
+        connection.Execute(EmployeesSql.RemoveEmployee, new
+        {
+            EmployeeId = employeeId
+        });
+        return true;
+    }
+}
