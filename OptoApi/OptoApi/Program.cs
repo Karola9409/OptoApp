@@ -1,4 +1,5 @@
-﻿using OptoApi.Options;
+﻿using OptoApi.Middlewares;
+using OptoApi.Options;
 using OptoApi.Services;
 using OptoApi.Validators;
 
@@ -30,6 +31,10 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseMiddleware<LoggingMiddleware>();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.MapControllers();
 
