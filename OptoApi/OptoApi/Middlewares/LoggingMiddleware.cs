@@ -14,7 +14,7 @@ public class LoggingMiddleware
     }
     public async Task Invoke(HttpContext context)
     {
-        Stopwatch stopwatch = new Stopwatch();
+        var stopwatch = new Stopwatch();
         _logger.LogInformation($"Started processing request {context.Request.Path}");
         stopwatch.Start();
         
