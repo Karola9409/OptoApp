@@ -1,6 +1,5 @@
-﻿using System;
-namespace OptoApi.Models
-{
+﻿namespace OptoApi.Models
+{ 
     public enum EmployeeRole
     {
        Boss = 1,
