@@ -3,8 +3,6 @@ using OptoApi.Services;
 using OptoApi.Models;
 using OptoApi.Validators;
 using OptoApi.ApiModels;
-
-
 namespace OptoApi.Controllers
 {
     [ApiController]
