@@ -5,10 +5,10 @@ public class Branch
     public Branch(int branchId, string city, string streetName, string streetNumber, List<Employee> employees, BranchStatus branchStatus)
     {
         BranchId = branchId;
+        City = city;
         StreetName = streetName;
         StreetNumber = streetNumber;
         Employees = employees;
-        City = city;
         BranchStatus = branchStatus;
     }
     public int BranchId { get; }
