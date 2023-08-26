@@ -10,12 +10,10 @@ namespace OptoApi.Services;
 public class EmployeesService : IEmployeesService
 {
     private readonly IOptions<DatabaseOptions> _databaseOptions;
-
     public EmployeesService(IOptions<DatabaseOptions> databaseOptions)
     {
         _databaseOptions = databaseOptions;
     }
-
     public List<Employee> GetAllEmployees()
     {
         using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
@@ -24,7 +22,6 @@ public class EmployeesService : IEmployeesService
 
         return result.AsList();
     }
-
     public Employee? GetEmployee(int id)
     {
         using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);

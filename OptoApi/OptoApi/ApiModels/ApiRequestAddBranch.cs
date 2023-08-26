@@ -14,5 +14,4 @@ public class ApiRequestAddBranch
     public string StreetName { get; set; }
 
     public string City { get; set; }
-    public List<Employee> Employee { get; set; }
 }
