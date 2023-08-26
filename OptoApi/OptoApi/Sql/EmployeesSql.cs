@@ -1,7 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
-using OptoApi.Models;
-
 namespace OptoApi.Sql;
 
 public class EmployeesSql
