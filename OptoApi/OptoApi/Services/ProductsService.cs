@@ -1,102 +1,74 @@
 using Dapper;
-using Microsoft.Extensions.Options;
-using Npgsql;
-using OptoApi.Exceptions;
 using OptoApi.Models;
-using OptoApi.Options;
-using OptoApi.Sql;
+using OptoApi.Repositories;
+using OptoApi.Validators;
 
 namespace OptoApi.Services;
 
 public class ProductsService : IProductsService
 {
-    private readonly IOptions<DatabaseOptions> _databaseOptions;
+    private readonly ProductRepository _productRepository;
+    private readonly ProductValidator _productValidator;
 
-    public ProductsService(IOptions<DatabaseOptions> databaseOptions)
+    public ProductsService(ProductRepository productRepository, ProductValidator productValidator)
     {
-        _databaseOptions = databaseOptions;
+        _productRepository = productRepository;
+        _productValidator = productValidator;
     }
 
     public List<Product> GetAllProducts()
     {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-        
-        var result = connection.Query<Product>(ProductSql.GetAllProducts);
-
+        var result = _productRepository.GetAllProducts();
         return result.AsList();
     }
 
-    public Product? GetProduct(int id)
+    public OperationResult<Product> GetProduct(int id)
     {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-
-        var result = connection.QueryFirstOrDefault<Product>(ProductSql.GetProduct, new
+        var product = _productRepository.GetProduct(id);
+        if (product == null)
         {
-            ID = id
-        });
-
-        return result;
+            return OperationResult<Product>.Failure($"Product with id {id} not found", ErrorStatus.NotFound);
+        }
+        return OperationResult<Product>.Success(product);
     }
     
-    public int AddProduct(Product product)
-    {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
+    public OperationResult<int> AddProduct(Product product)
+    {   var productWithGivenNameAlreadyAdded = _productRepository.Exists(product.Name);
+        if (productWithGivenNameAlreadyAdded)
+        {
+            return OperationResult<int>.Failure(
+                $"Product with name {product.Name} already exists",
+                ErrorStatus.AlreadyExists);
+        }
         
-        var result = connection.Execute(ProductSql.AddProduct, new
+        var validationResult = _productValidator.IsValid(product);
+        if (validationResult.IsValid is false)
         {
-            product.Name,
-            product.Description,
-            product.StockCount,
-            product.GrossPrice,
-            product.VatPercentage,
-            product.PhotoUrl
-        });
-        return result;
+            return OperationResult<int>.Failure(
+                $"Product is invalid: {validationResult.ErrorMessage}",
+                ErrorStatus.NotValid);
+        }
+        var result = _productRepository.AddProduct(product);
+        return OperationResult<int>.Success(result);
     }
-    public void UpdateProduct(Product product)
+    public OperationResult UpdateProduct(Product product)
     {
-        try
-        {
-            using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-            
-            connection.Execute(ProductSql.UpdateProduct, new
-            {
-                product.Id,
-                product.Name,
-                product.Description,
-                product.StockCount,
-                product.GrossPrice,
-                product.VatPercentage,
-                product.PhotoUrl
-            });
-        }
-        catch(PostgresException pex)
-        {
-            if (pex.SqlState == "23505")
-            {
-                throw new ProductNameDuplicateException();
-            }
-        }
+        _productRepository.UpdateProduct(product);
+        return OperationResult.Success();
     }
 
     public bool RemoveProduct(int productId)
     {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-        
-        connection.Execute(ProductSql.RemoveProduct, new
+        var product = _productRepository.GetProduct(productId);
+        if(product == null)
         {
-            ID = productId
-        });
-        return true;
+            return false;
+        }
+        return _productRepository.RemoveProduct(productId);
     }
     public bool Exists(string productName)
     {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-
-        var result = connection.ExecuteScalar<bool>(ProductSql.ProductExists, new
-        {
-            Name = productName
-        });
+        var result = _productRepository.Exists(productName);
         return result;
     }
 }
