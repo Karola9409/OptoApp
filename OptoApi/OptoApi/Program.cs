@@ -1,5 +1,6 @@
 ﻿using OptoApi.Middlewares;
 using OptoApi.Options;
+using OptoApi.Repositories;
 using OptoApi.Services;
 using OptoApi.Validators;
 
@@ -20,6 +21,7 @@ builder.Services.AddTransient<IEmployeesService, EmployeesService>();
 builder.Services.AddTransient<EmployeeValidator>();
 builder.Services.AddTransient<IBranchesService, BranchesService>();
 builder.Services.AddTransient<BranchValidator>();
+builder.Services.AddTransient<ProductRepository>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

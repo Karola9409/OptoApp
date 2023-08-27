@@ -32,24 +32,18 @@ public class ProductsController : ControllerBase
     [HttpGet("Get/{id}")]
     public IActionResult GetProduct(int id)
     {
-        var result = _productsService.GetProduct(id);
-        if (result == null)
+        var operationResult = _productsService.GetProduct(id);
+        if(operationResult.Succeeded is false)
         {
-            return NotFound($"404, Product with id {id} not found");
+            return BadRequest(
+                $"Operation result: {operationResult.Status}, {operationResult.Message}");
         }
-        
-        return Ok(result);
+        return Ok(operationResult.Data);
     }
 
     [HttpPost("Add")]
-    public IActionResult AddProduct([FromBody] ApiRequestProduct product)
+    public IActionResult AddProduct([FromBody]ApiRequestProduct product)
     {
-        var productWithGivenNameAlreadyAdded = _productsService.Exists(product.Name);
-        if (productWithGivenNameAlreadyAdded)
-        {
-            return BadRequest($"400, product with name {product.Name} already exists");
-        }
-        
         var productToAdd = new Product(
             0,
             product.Name,
@@ -58,15 +52,14 @@ public class ProductsController : ControllerBase
             product.GrossPrice,
             product.VatPercentage,
             product.PhotoUrl);
-
-        var validationResult = _productValidator.IsValid(productToAdd);
-        if (validationResult.IsValid is false)
+        
+        var operationResult = _productsService.AddProduct(productToAdd);
+        if(operationResult.Succeeded is false)
         {
-            return BadRequest($"Product is invalid: {validationResult.ErrorMessage}");
+            return BadRequest(
+                $"Operation result: {operationResult.Status}, {operationResult.Message}");
         }
-
-        var productId = _productsService.AddProduct(productToAdd);
-        return Ok(productId);
+        return Ok(operationResult.Data);
     }
 
     [HttpPut("Update/{id}")]
@@ -79,8 +72,7 @@ public class ProductsController : ControllerBase
             {
                 return NotFound($"404, Product with id {id} not found");
             }
-
-            ;
+            
             var productToUpdate = new Product(
                 id,
                 product.Name,
@@ -108,13 +100,11 @@ public class ProductsController : ControllerBase
     [HttpDelete("Remove/{id}")]
     public IActionResult RemoveProduct(int id)
     {
-        var result = _productsService.GetProduct(id);
-        if (result == null)
+        var result = _productsService.RemoveProduct(id);
+        if (result is false)
         {
             return NotFound($"404, Product with id {id} not found");
         }
-        
-        var removed = _productsService.RemoveProduct(id);
-        return Ok(removed);
+        return Ok();
     }
 }
