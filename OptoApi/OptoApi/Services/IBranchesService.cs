@@ -4,10 +4,10 @@ namespace OptoApi.Services;
 
 public interface IBranchesService
 {
-    List<Branch> GetAllBranches();
-    Branch? GetBranch(int id);
-    int AddBranch(Branch branchToAdd);
-    void AddEmployee(int employeeId, int branchId);
-    void RemoveEmployee(int employeeId, int branchId);
-    void ChangeStatus(int branchId, BranchStatus branchStatus);
+    Task<List<Branch>> GetAllBranches();
+    Task<OperationResult<Branch>> GetBranch(int id);
+    Task<OperationResult<int>> AddBranch(Branch branchToAdd);
+    Task<OperationResult> AddEmployee(int employeeId, int branchId);
+    Task<OperationResult> RemoveEmployee(int employeeId, int branchId);
+    Task<OperationResult> ChangeStatus(int branchId, BranchStatus branchStatus);
 }

@@ -21,7 +21,9 @@ builder.Services.AddTransient<IEmployeesService, EmployeesService>();
 builder.Services.AddTransient<EmployeeValidator>();
 builder.Services.AddTransient<IBranchesService, BranchesService>();
 builder.Services.AddTransient<BranchValidator>();
-builder.Services.AddTransient<ProductRepository>();
+builder.Services.AddTransient<IProductRepository, ProductRepository>();
+builder.Services.AddTransient<IEmployeeRepository,EmployeeRepository>();
+builder.Services.AddTransient<IBranchRepository,BranchRepository>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

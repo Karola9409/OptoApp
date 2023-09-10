@@ -1,5 +1,4 @@
-﻿using System;
-using OptoApi.Models;
+﻿using OptoApi.Models;
 
 namespace OptoApi.Validators
 {

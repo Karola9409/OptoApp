@@ -1,4 +1,5 @@
 using Dapper;
+using OptoApi.Exceptions;
 using OptoApi.Models;
 using OptoApi.Repositories;
 using OptoApi.Validators;
@@ -7,24 +8,24 @@ namespace OptoApi.Services;
 
 public class ProductsService : IProductsService
 {
-    private readonly ProductRepository _productRepository;
+    private readonly IProductRepository _productRepository;
     private readonly ProductValidator _productValidator;
 
-    public ProductsService(ProductRepository productRepository, ProductValidator productValidator)
+    public ProductsService(IProductRepository productRepository, ProductValidator productValidator)
     {
         _productRepository = productRepository;
         _productValidator = productValidator;
     }
 
-    public List<Product> GetAllProducts()
+    public async Task<List<Product>> GetAllProducts()
     {
-        var result = _productRepository.GetAllProducts();
+        var result = await _productRepository.GetAllProducts();
         return result.AsList();
     }
 
-    public OperationResult<Product> GetProduct(int id)
+    public async Task<OperationResult<Product>> GetProduct(int id)
     {
-        var product = _productRepository.GetProduct(id);
+        var product = await _productRepository.GetProduct(id);
         if (product == null)
         {
             return OperationResult<Product>.Failure($"Product with id {id} not found", ErrorStatus.NotFound);
@@ -32,8 +33,9 @@ public class ProductsService : IProductsService
         return OperationResult<Product>.Success(product);
     }
     
-    public OperationResult<int> AddProduct(Product product)
-    {   var productWithGivenNameAlreadyAdded = _productRepository.Exists(product.Name);
+    public async Task<OperationResult<int>> AddProduct(Product product)
+    {  
+        var productWithGivenNameAlreadyAdded = await _productRepository.Exists(product.Name);
         if (productWithGivenNameAlreadyAdded)
         {
             return OperationResult<int>.Failure(
@@ -48,27 +50,47 @@ public class ProductsService : IProductsService
                 $"Product is invalid: {validationResult.ErrorMessage}",
                 ErrorStatus.NotValid);
         }
-        var result = _productRepository.AddProduct(product);
+        var result = await _productRepository.AddProduct(product);
         return OperationResult<int>.Success(result);
     }
-    public OperationResult UpdateProduct(Product product)
+    public async Task<OperationResult> UpdateProduct(Product product)
     {
-        _productRepository.UpdateProduct(product);
-        return OperationResult.Success();
+        var result = await _productRepository.GetProduct(product.Id);
+        if (result == null)
+        {
+            return OperationResult.Failure($"Product with id {product.Id} not found", ErrorStatus.NotFound);
+        }
+        var validationResult = _productValidator.IsValid(product);
+        if (validationResult.IsValid is false)
+        {
+            return OperationResult.Failure($"Product is invalid:", ErrorStatus.NotValid);
+        }
+        try
+        {
+            await _productRepository.UpdateProduct(product);
+            return OperationResult.Success();
+        }
+        catch (ProductNameDuplicateException)
+        {
+            return OperationResult.Failure($"Product with this name already exist", ErrorStatus.AlreadyExists);
+        }
     }
-
-    public bool RemoveProduct(int productId)
+    public async Task<OperationResult<bool>> RemoveProduct(int productId)
     {
-        var product = _productRepository.GetProduct(productId);
+        var product = await _productRepository.GetProduct(productId);
         if(product == null)
         {
-            return false;
+            return OperationResult<bool>.Failure(
+                $"Product with id {productId} not found", 
+                ErrorStatus.NotFound);
         }
-        return _productRepository.RemoveProduct(productId);
+        var result = _productRepository.RemoveProduct(productId);
+        return OperationResult<bool>.Success(await result);
+
     }
-    public bool Exists(string productName)
+    public async Task<bool> Exists(string productName)
     {
-        var result = _productRepository.Exists(productName);
+        var result = await _productRepository.Exists(productName);
         return result;
     }
 }

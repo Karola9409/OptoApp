@@ -34,11 +34,9 @@ public class EmployeesSql
 		       @IsDeleted);";
 
 	public static string UpdateEmployee = @"UPDATE public.""Employee"" SET
-	    ""FirstName""= @FirstName,
 		""LastName""= @LastName,
 		""Email""= @Email,
-		""EmployeeRoleId""= @EmployeeRole,
-		""IsDeleted""= @IsDeleted
+		""EmployeeRoleId""= @EmployeeRole
     	WHERE ""EmployeeId""= @EmployeeId;";
 
 	public static string RemoveEmployee = @"UPDATE public.""Employee""

@@ -18,12 +18,10 @@ public class BranchValidator
         {
             return new ValidationResult(false, "The Street number field can't be empty.");
         }
-
         if (!branch.StreetNumber.Any(char.IsDigit))
         {
             return new ValidationResult(false, "The Street number field must contain some number.");
         }
-
         if (branch.BranchStatus == BranchStatus.Active && branch.Employees.Count == 0)
         {
             return new ValidationResult(false, "Active branch must have some employee");

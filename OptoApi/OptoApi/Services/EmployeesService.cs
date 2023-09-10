@@ -1,77 +1,80 @@
 using Dapper;
-using Microsoft.Extensions.Options;
-using Npgsql;
 using OptoApi.Models;
-using OptoApi.Options;
-using OptoApi.Sql;
+using OptoApi.Repositories;
+using OptoApi.Validators;
 
 namespace OptoApi.Services;
 
 public class EmployeesService : IEmployeesService
 {
-    private readonly IOptions<DatabaseOptions> _databaseOptions;
-    public EmployeesService(IOptions<DatabaseOptions> databaseOptions)
+    private readonly IEmployeeRepository _employeeRepository;
+    private readonly EmployeeValidator _employeeValidator;
+
+    public EmployeesService(IEmployeeRepository employeeRepository, EmployeeValidator employeeValidator)
     {
-        _databaseOptions = databaseOptions;
+        _employeeRepository = employeeRepository;
+        _employeeValidator = employeeValidator;
     }
-    public List<Employee> GetAllEmployees()
+
+    public async Task<List<Employee>> GetAllEmployees()
     {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-
-        var result = connection.Query<Employee>(EmployeesSql.GetAllEmployees);
-
+        var result = await _employeeRepository.GetAllEmployees();
         return result.AsList();
     }
-    public Employee? GetEmployee(int id)
+
+    public async Task<OperationResult<Employee>> GetEmployee(int id)
     {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-
-        var result = connection.QueryFirstOrDefault<Employee>(EmployeesSql.GetEmployee, new
+        var employee = await _employeeRepository.GetEmployee(id);
+        if (employee == null)
         {
-            EmployeeId = id
-        });
-        return result;
-    }
-
-    public int AddEmployee(Employee employee)
-    {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-
-        var result = connection.Execute(EmployeesSql.AddEmployee, new
-        {
-            employee.FirstName,
-            employee.LastName,
-            employee.Email,
-            employee.EmployeeRole,
-            employee.IsDeleted
-        });
-        return result;
-    }
-
-    public void UpdateEmployee(Employee employee)
-    {
-        {
-            using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-
-            connection.Execute(EmployeesSql.UpdateEmployee, new
-            {
-                employee.EmployeeId,
-                employee.FirstName,
-                employee.LastName,
-                employee.Email,
-                employee.EmployeeRole,
-                employee.IsDeleted
-            });
+            return OperationResult<Employee>.Failure($"Employee with id {id} not found", ErrorStatus.NotFound);
         }
-    }
-    public bool RemoveEmployee(int employeeId)
-    {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
 
-        connection.Execute(EmployeesSql.RemoveEmployee, new
+        return OperationResult<Employee>.Success(employee);
+    }
+
+    public async Task<OperationResult<int>> AddEmployee(Employee employee)
+    {
+        var validationResult = _employeeValidator.IsValid(employee);
+        if (validationResult.IsValid is false)
         {
-            EmployeeId = employeeId
-        });
-        return true;
+            return OperationResult<int>.Failure(
+                $"Employee is invalid: {validationResult.ErrorMessage}", ErrorStatus.NotValid);
+        }
+
+        var result = await _employeeRepository.AddEmployee(employee);
+        return OperationResult<int>.Success(result);
+    }
+
+    public async Task<OperationResult> UpdateEmployee(UpdateEmployeeModel employee)
+    {
+        var existingEmployee = await _employeeRepository.GetEmployee(employee.ID);
+        if (existingEmployee == null)
+        {
+            return OperationResult.Failure(
+                $"Employee with id {employee.ID} not found", ErrorStatus.NotFound);
+        }
+
+        var validationResult = _employeeValidator.IsValid(employee);
+        if (validationResult.IsValid is false)
+        {
+            return OperationResult.Failure($"Employee is invalid:", ErrorStatus.NotValid);
+        }
+
+        await _employeeRepository.UpdateEmployee(employee);
+        return OperationResult.Success();
+    }
+
+    public async Task<OperationResult<bool>> RemoveEmployee(int employeeId)
+    {
+        var employee =await _employeeRepository.GetEmployee(employeeId);
+        if (employee == null)
+        {
+            return OperationResult<bool>.Failure(
+                $"Employee with id {employeeId} not found", ErrorStatus.NotFound);
+        }
+
+        var result =await _employeeRepository.RemoveEmployee(employeeId);
+        return OperationResult<bool>.Success(result);
     }
 }
