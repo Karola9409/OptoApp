@@ -39,12 +39,10 @@ public class OperationResult
     public string Message { get; }
     public ErrorStatus? Status { get; }
     public bool Succeeded { get; }
-
     public static OperationResult Success()
     {
         return new OperationResult("", true, null);
     }
-
     public static OperationResult Failure(string message, ErrorStatus status)
     {
         return new OperationResult (message, false, status);

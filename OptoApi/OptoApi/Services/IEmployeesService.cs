@@ -4,13 +4,13 @@ namespace OptoApi.Services;
 
 public interface IEmployeesService
 { 
-    List<Employee> GetAllEmployees();
+    Task<List<Employee>> GetAllEmployees();
 
-    Employee? GetEmployee(int id);
+    Task<OperationResult<Employee>> GetEmployee(int id);
 
-    int AddEmployee(Employee employee);
+    Task<OperationResult<int>> AddEmployee(Employee employee);
 
-    void UpdateEmployee(Employee employee);
+    Task<OperationResult> UpdateEmployee(UpdateEmployeeModel employee);
 
-    bool RemoveEmployee(int employeeId);
+    Task<OperationResult<bool>> RemoveEmployee(int employeeId);
 }

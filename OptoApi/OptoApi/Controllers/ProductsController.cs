@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using OptoApi.ApiModels;
-using OptoApi.Exceptions;
 using OptoApi.Models;
 using OptoApi.Services;
-using OptoApi.Validators;
 
 namespace OptoApi.Controllers;
 
@@ -12,27 +10,24 @@ namespace OptoApi.Controllers;
 public class ProductsController : ControllerBase
 {
     private readonly IProductsService _productsService;
-    private readonly ProductValidator _productValidator;
 
     public ProductsController(
-        IProductsService productsService,
-        ProductValidator productValidator)
+        IProductsService productsService)
     {
         _productsService = productsService;
-        _productValidator = productValidator;
     }
 
     [HttpGet("GetAll")]
-    public IActionResult GetAllProducts()
+    public async Task<IActionResult> GetAllProducts()
     {
-        var products = _productsService.GetAllProducts();
+        var products = await _productsService.GetAllProducts();
         return Ok(products);
     }
 
     [HttpGet("Get/{id}")]
-    public IActionResult GetProduct(int id)
+    public async Task<IActionResult> GetProduct(int id)
     {
-        var operationResult = _productsService.GetProduct(id);
+        var operationResult = await _productsService.GetProduct(id);
         if(operationResult.Succeeded is false)
         {
             return BadRequest(
@@ -42,7 +37,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost("Add")]
-    public IActionResult AddProduct([FromBody]ApiRequestProduct product)
+    public async Task<IActionResult> AddProduct([FromBody]ApiRequestProduct product)
     {
         var productToAdd = new Product(
             0,
@@ -53,7 +48,7 @@ public class ProductsController : ControllerBase
             product.VatPercentage,
             product.PhotoUrl);
         
-        var operationResult = _productsService.AddProduct(productToAdd);
+        var operationResult = await _productsService.AddProduct(productToAdd);
         if(operationResult.Succeeded is false)
         {
             return BadRequest(
@@ -63,17 +58,9 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("Update/{id}")]
-    public IActionResult UpdateProduct([FromBody] ApiRequestProduct product, int id)
+    public async Task<IActionResult> UpdateProduct([FromBody] ApiRequestProduct product, int id)
     {
-        try
-        {
-            var result = _productsService.GetProduct(id);
-            if (result == null)
-            {
-                return NotFound($"404, Product with id {id} not found");
-            }
-            
-            var productToUpdate = new Product(
+        var productToUpdate = new Product(
                 id,
                 product.Name,
                 product.Description,
@@ -81,29 +68,24 @@ public class ProductsController : ControllerBase
                 product.GrossPrice,
                 product.VatPercentage,
                 product.PhotoUrl);
-
-            var validationResult = _productValidator.IsValid(productToUpdate);
-            if (validationResult.IsValid is false)
-            {
-                return BadRequest($"Product is invalid: {validationResult.ErrorMessage}");
-            }
-
-            _productsService.UpdateProduct(productToUpdate);
-            return Ok();
-        }
-        catch (ProductNameDuplicateException)
+        
+        var operationResult = await _productsService.UpdateProduct(productToUpdate);
+        if(operationResult.Succeeded is false)
         {
-            return BadRequest("400, Product with this name already exist");
+            return BadRequest(
+                $"Operation result: {operationResult.Status}, {operationResult.Message}");
         }
+        return Ok();
     }
 
     [HttpDelete("Remove/{id}")]
-    public IActionResult RemoveProduct(int id)
+    public async Task<IActionResult> RemoveProduct(int id)
     {
-        var result = _productsService.RemoveProduct(id);
-        if (result is false)
+        var operationResult = await _productsService.RemoveProduct(id);
+        if(operationResult.Succeeded is false)
         {
-            return NotFound($"404, Product with id {id} not found");
+            return BadRequest(
+                $"Operation result: {operationResult.Status}, {operationResult.Message}");
         }
         return Ok();
     }

@@ -8,7 +8,7 @@ using OptoApi.Sql;
 
 namespace OptoApi.Repositories;
 
-public class ProductRepository
+public class ProductRepository : IProductRepository
 {
     private readonly IOptions<DatabaseOptions> _databaseOptions;
 
@@ -16,33 +16,29 @@ public class ProductRepository
     {
         _databaseOptions = databaseOptions;
     }
-    
-    
-    
-    public List<Product> GetAllProducts()
+    public async Task<List<Product>> GetAllProducts()
     {
         using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
         
-        var result = connection.Query<Product>(ProductSql.GetAllProducts);
+        var result = await connection.QueryAsync<Product>(ProductSql.GetAllProducts);
 
         return result.AsList();
     }
-    public Product? GetProduct(int id)
+    public async Task<Product?> GetProduct(int id)
     {
         using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
 
-        var result = connection.QueryFirstOrDefault<Product>(ProductSql.GetProduct, new
+        var result = await connection.QueryFirstOrDefaultAsync<Product>(ProductSql.GetProduct, new
         {
             ID = id
         });
-
         return result;
     }
-    public int AddProduct(Product product)
+    public async Task<int>AddProduct(Product product)
     {
         using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
         
-        var result = connection.Execute(ProductSql.AddProduct, new
+        var result = await connection.ExecuteAsync(ProductSql.AddProduct, new
         {
             product.Name,
             product.Description,
@@ -53,13 +49,13 @@ public class ProductRepository
         });
         return result;
     }
-    public void UpdateProduct(Product product)
+    public async Task UpdateProduct(Product product)
     {
         try
         {
             using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
             
-            connection.Execute(ProductSql.UpdateProduct, new
+            await connection.ExecuteAsync(ProductSql.UpdateProduct, new
             {
                 product.Id,
                 product.Name,
@@ -78,21 +74,21 @@ public class ProductRepository
             }
         }
     }
-    public bool RemoveProduct(int productId)
+    public async Task<bool> RemoveProduct(int productId)
     {
         using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
         
-        connection.Execute(ProductSql.RemoveProduct, new
+        await connection.ExecuteAsync(ProductSql.RemoveProduct, new
         {
             ID = productId
         });
         return true;
     }
-    public bool Exists(string productName)
+    public async Task<bool> Exists(string productName)
     {
         using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
 
-        var result = connection.ExecuteScalar<bool>(ProductSql.ProductExists, new
+        var result = await connection.ExecuteScalarAsync<bool>(ProductSql.ProductExists, new
         {
             Name = productName
         });

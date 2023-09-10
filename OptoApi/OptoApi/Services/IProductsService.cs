@@ -4,10 +4,10 @@ namespace OptoApi.Services;
 
 public interface IProductsService
 {
-    List<Product> GetAllProducts();
-    OperationResult<Product> GetProduct(int id);
-    OperationResult<int> AddProduct(Product product);
-    OperationResult UpdateProduct(Product product);
-    bool RemoveProduct(int productId);
-    bool Exists(string productName);
+    Task<List<Product>> GetAllProducts();
+    Task<OperationResult<Product>> GetProduct(int id);
+    Task<OperationResult<int>> AddProduct(Product product);
+    Task<OperationResult> UpdateProduct(Product product);
+    Task<OperationResult<bool>> RemoveProduct(int productId);
+    Task<bool> Exists(string productName);
 }

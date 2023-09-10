@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using OptoApi.ApiModels;
 using OptoApi.Models;
@@ -23,25 +24,25 @@ public class BranchesController : ControllerBase
     }
 
     [HttpGet("GetAll")]
-    public IActionResult GetAllBranches()
+    public async Task<IActionResult> GetAllBranches()
     {
-        var branches = _branchesService.GetAllBranches();
+        var branches =await _branchesService.GetAllBranches();
         return Ok(branches);
     }
 
     [HttpGet("Get/{id}")]
-    public IActionResult GetBranch(int id)
+    public async Task<IActionResult> GetBranch(int id)
     {
-        var result = _branchesService.GetBranch(id);
-        if (result == null)
+        var operationResult = await _branchesService.GetBranch(id);
+        if (operationResult.Succeeded is false)
         {
-            return NotFound($"404, Branch with id {id} not found");
+            return BadRequest($"Operation result: {operationResult.Status}, {operationResult.Message}");
         }
-        return Ok(result);
+        return Ok(operationResult.Data);
     }
 
     [HttpPost("Add")]
-    public IActionResult AddBranch([FromBody] ApiRequestAddBranch addBranch)
+    public async Task<IActionResult> AddBranch([FromBody] ApiRequestAddBranch addBranch)
     {
         var branchToAdd = new Branch(
             0,
@@ -51,60 +52,47 @@ public class BranchesController : ControllerBase
             new List<Employee>(),
             BranchStatus.Pending);
 
-        var validationResult = _branchValidator.IsValid(branchToAdd);
-        if (validationResult.IsValid is false)
+        var operationResult =await _branchesService.AddBranch(branchToAdd);
+        if (operationResult.Succeeded is false)
         {
-            return BadRequest($"Branch is invalid: {validationResult.ErrorMessage}");
+            return BadRequest($"Branch is invalid: {operationResult.Status}, {operationResult.Message}");
         }
-        var branchId = _branchesService.AddBranch(branchToAdd);
-        return Ok(branchId);
+        return Ok(operationResult.Data);
     }
     
     [HttpPut("{branchId}/AddEmployee/{employeeId}")]
-    public IActionResult AddEmployee(int employeeId, int branchId)
+    public async Task<IActionResult> AddEmployee(int employeeId, int branchId)
     {
-        var employee = _employeesService.GetEmployee(employeeId);
-        if (employee == null)
+        var operationResult =await _branchesService.AddEmployee(employeeId, branchId);
+        if(operationResult.Succeeded is false)
         {
-            return NotFound($"404, Employee with id {employeeId} not found");
+            return BadRequest(
+                $"Operation result: {operationResult.Status}, {operationResult.Message}");
         }
-
-        var branch = _branchesService.GetBranch(branchId);
-        if (branch == null)
-        {
-            return NotFound($"404, Branch with id {branchId} not found");
-        }
-        _branchesService.AddEmployee(employeeId, branchId);
         return Ok();
     }
     
     [HttpPut("{branchId}/RemoveEmployee/{employeeId}")]
-    public IActionResult RemoveEmployee(int employeeId, int branchId)
+    public async Task<IActionResult> RemoveEmployee(int employeeId, int branchId)
     {
-        var employee = _employeesService.GetEmployee(employeeId);
-        if (employee == null)
+        var operationResult = await _branchesService.RemoveEmployee(employeeId, branchId);
+        if(operationResult.Succeeded is false)
         {
-            return NotFound($"404, Employee with id {employeeId} not found");
+            return BadRequest(
+                $"Operation result: {operationResult.Status}, {operationResult.Message}");
         }
-
-        var branch = _branchesService.GetBranch(branchId);
-        if (branch == null)
-        {
-            return NotFound($"404, Branch with id {branchId} not found");
-        }
-        _branchesService.RemoveEmployee(employeeId, branchId);
         return Ok();
     }
     
     [HttpPut("{branchId}/ChangeStatus/{branchStatus}")]
-    public IActionResult ChangeStatus(BranchStatus branchStatus, int branchId)
+    public async Task<IActionResult> ChangeStatus(BranchStatus branchStatus, int branchId)
     {
-        var branch = _branchesService.GetBranch(branchId);
-        if (branch == null)
+        var operationResult =await _branchesService.ChangeStatus(branchId, branchStatus);
+        if(operationResult.Succeeded is false)
         {
-            return NotFound($"404, Branch with id {branchId} not found");
+            return BadRequest(
+                $"Operation result: {operationResult.Status}, {operationResult.Message}");
         }
-        _branchesService.ChangeStatus(branchId, branchStatus);
         return Ok();
     }
 }

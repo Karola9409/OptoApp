@@ -1,81 +1,111 @@
 using Dapper;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.Extensions.Options;
-using Npgsql;
 using OptoApi.Models;
-using OptoApi.Models.ReadModels;
-using OptoApi.Options;
-using OptoApi.Sql;
+using OptoApi.Repositories;
+using OptoApi.Validators;
 
 namespace OptoApi.Services;
 
-public class BranchesService : IBranchesService 
+public class BranchesService : IBranchesService
 {
-    private readonly IOptions<DatabaseOptions> _databaseOptions;
-    public BranchesService(IOptions<DatabaseOptions> databaseOptions)
+    private readonly IBranchRepository _branchRepository;
+    private readonly BranchValidator _branchValidator;
+    private readonly IEmployeeRepository _employeeRepository;
+    public BranchesService(
+        IBranchRepository branchRepository, 
+        BranchValidator branchValidator,
+        IEmployeeRepository employeeRepository)
     {
-        _databaseOptions = databaseOptions;
+        _branchRepository = branchRepository;
+        _branchValidator = branchValidator;
+        _employeeRepository = employeeRepository;
     }
-    public List<Branch> GetAllBranches()
+    public async Task<List<Branch>> GetAllBranches()
     {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-        
-        var readModels = connection.Query<BranchReadModel>(BranchesSql.GetAllBranches);
-        return BranchReadModelMapper.Map(readModels);
+        var result =await  _branchRepository.GetAllBranches();
+        return result.AsList();
     }
-    public Branch? GetBranch(int id)
+    public async Task<OperationResult<Branch>> GetBranch(int id)
     {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-
-        var readModels = connection.Query<BranchReadModel>(BranchesSql.GetBranch, new
+        var readModels =await _branchRepository.GetBranch(id);
+        if (readModels == null)
         {
-            BranchId = id
-        });
-        var mappedBranches = BranchReadModelMapper.Map(readModels);
-        return mappedBranches.SingleOrDefault();
+            return OperationResult<Branch>.Failure(
+                $"Branch with id {id} not found", 
+                ErrorStatus.NotFound);
+        }
+        return OperationResult<Branch>.Success(readModels);
     }
-    public int AddBranch(Branch branch)
+    public async Task<OperationResult<int>> AddBranch(Branch branch)
     {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-        
-        var result = connection.Execute(BranchesSql.AddBranch, new
+        var validationResult = _branchValidator.IsValid(branch);
+        if (validationResult.IsValid is false)
         {
-            branch.City,
-            branch.StreetName,
-            branch.StreetNumber,
-            branch.BranchStatus
-        });
-        return result;
+            return OperationResult<int>.Failure(
+                $"Branch is invalid: {validationResult.ErrorMessage}",
+                ErrorStatus.NotValid);
+        }
+        var result =await _branchRepository.AddBranch(branch);
+        return OperationResult<int>.Success(result);
     }
-
-    public void AddEmployee(int employeeId, int branchId)
+    public async Task<OperationResult> AddEmployee(int employeeId, int branchId)
     {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-
-        var result = connection.Execute(BranchesSql.AddEmployee, new
+        var employee = await _employeeRepository.GetEmployee(employeeId);
+        if (employee == null)
         {
-            branchId,
-            employeeId
-        });
+            return OperationResult.Failure(
+                $"Employee with id {employeeId} not found",
+                ErrorStatus.NotFound);
+        }
+
+        var branch = await _branchRepository.GetBranch(branchId);
+        if (branch == null)
+        {
+            return OperationResult.Failure(
+                $"Branch with id {branchId} not found",
+                ErrorStatus.NotFound);
+        }
+
+        await _branchRepository.AddEmployee(employeeId, branchId);
+        return OperationResult.Success();
     }
-    public void RemoveEmployee(int employeeId, int branchId)
+    public async Task<OperationResult> RemoveEmployee(int employeeId, int branchId)
     {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-
-        var result = connection.Execute(BranchesSql.RemoveEmployee, new
+        var employee =await _employeeRepository.GetEmployee(employeeId);
+        if (employee == null)
         {
-            employeeId,
-            branchId
-        });
+            return OperationResult.Failure(
+                $"Employee with id {employeeId} not found",
+                ErrorStatus.NotFound);
+        }
+
+        var branch =await _branchRepository.GetBranch(branchId);
+        if (branch == null)
+        {
+            return OperationResult.Failure(
+                $"Branch with id {branchId} not found",
+                ErrorStatus.NotFound);
+        }
+
+        await _branchRepository.RemoveEmployee(employeeId, branchId);
+        return OperationResult.Success();
     }
-    public void ChangeStatus(int branchId, BranchStatus branchStatus)
+    public async Task<OperationResult> ChangeStatus(int branchId, BranchStatus branchStatus)
     {
-        using var connection = new NpgsqlConnection(_databaseOptions.Value.ConnectionString);
-
-        connection.Execute(BranchesSql.ChangeStatus, new
+        var branch = await _branchRepository.GetBranch(branchId);
+        if (branch == null)
         {
-            branchId,
-            branchStatus
-        });
+            return OperationResult.Failure(
+                $"Branch with id {branchId} not found", 
+                ErrorStatus.NotFound);
+        }
+
+        if (branchStatus == BranchStatus.Active && branch.Employees.Count == 0)
+        {
+            return OperationResult.Failure(
+                $"Active branch must have employees",
+                ErrorStatus.Failure);
+        }
+        await _branchRepository.ChangeStatus(branchId, branchStatus);
+        return OperationResult.Success();
     }
 }

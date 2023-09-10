@@ -10,37 +10,33 @@ namespace OptoApi.Controllers
     public class EmployeesController : ControllerBase
     {
         private readonly IEmployeesService _employeesService;
-        private readonly EmployeeValidator _employeeValidator;
-
         public EmployeesController(
-            IEmployeesService employeesService,
-            EmployeeValidator employeeValidator)
+            IEmployeesService employeesService)
         {
             _employeesService = employeesService;
-            _employeeValidator = employeeValidator;
         }
 
         [HttpGet("GetAll")]
-        public IActionResult GetAllEmployees()
+        public async Task<IActionResult> GetAllEmployees()
         {
-            var employees = _employeesService.GetAllEmployees();
+            var employees = await _employeesService.GetAllEmployees();
             return Ok(employees);
         }
 
         [HttpGet("Get/{id}")]
-        public IActionResult GetEmployee(int id)
+        public async Task<IActionResult> GetEmployee(int id)
         {
-            var result = _employeesService.GetEmployee(id);
-            if (result == null)
+            var operationResult =await _employeesService.GetEmployee(id);
+            if (operationResult.Succeeded is false)
             {
-                return NotFound($"404, Employee with id {id} not found");
+                return BadRequest(
+                    $"Operation result: {operationResult.Status}, {operationResult.Message}");
             }
-            
-            return Ok(result);
+            return Ok(operationResult.Data);
         }
 
         [HttpPost("Add")]
-        public IActionResult AddEmployee([FromBody] ApiRequestAddEmployee addEmployee)
+        public async Task<IActionResult> AddEmployee([FromBody]ApiRequestAddEmployee addEmployee)
         {
             var employeeToAdd = new Employee(
                 0,
@@ -49,54 +45,43 @@ namespace OptoApi.Controllers
                 addEmployee.Email,
                 addEmployee.EmployeeRole);
 
-            var validationResult = _employeeValidator.IsValid(employeeToAdd);
-            if (validationResult.IsValid is false)
+            var operationResult =await _employeesService.AddEmployee(employeeToAdd);
+            if (operationResult.Succeeded is false)
             {
-                return BadRequest($"Employee is invalid: {validationResult.ErrorMessage}");
+                return BadRequest(
+                    $"Operation result: {operationResult.Status}, {operationResult.Message}");
             }
-
-            var employeeId = _employeesService.AddEmployee(employeeToAdd);
-            return Ok(employeeId);
+            return Ok(operationResult.Data);
         }
 
         [HttpPut("Update/{id}")]
-        public IActionResult UpdateEmployee([FromBody] ApiRequestUpdateEmployee employee, int id)
+        public async Task<IActionResult> UpdateEmployee([FromBody] ApiRequestUpdateEmployee employee, int id)
         {
-            var existingEmployee = _employeesService.GetEmployee(id);
-            if (existingEmployee == null)
-            {
-                return NotFound($"404, Employee with id {id} not found");
-            }
-            
-            var employeeToUpdate = new Employee(
+            var employeeToUpdate = new UpdateEmployeeModel(
                 id,
-                existingEmployee.FirstName,
                 employee.LastName,
                 employee.Email,
-                employee.EmployeeRole,
-                existingEmployee.IsDeleted);
+                employee.EmployeeRole);
 
-            var validationResult = _employeeValidator.IsValid(employeeToUpdate);
-            if (validationResult.IsValid is false)
+            var operationResult =await _employeesService.UpdateEmployee(employeeToUpdate);
+            if (operationResult.Succeeded is false)
             {
-                return BadRequest($"Employee is invalid: {validationResult.ErrorMessage}");
+                return BadRequest(
+                    $"Operation result: {operationResult.Status}, {operationResult.Message}");
             }
-
-            _employeesService.UpdateEmployee(employeeToUpdate);
             return Ok();
         }
 
         [HttpDelete("Remove/{id}")]
-        public IActionResult RemoveEmployee(int id)
+        public async Task<IActionResult> RemoveEmployee(int id)
         {
-            var result = _employeesService.GetEmployee(id);
-            if (result == null)
+            var operationResult = await _employeesService.RemoveEmployee(id);
+            if (operationResult.Succeeded is false)
             {
-                return NotFound($"404, Employee with id {id} not found");
+                return BadRequest(
+                    $"Operation result: {operationResult.Status}, {operationResult.Message}");
             }
-            
-            var removed = _employeesService.RemoveEmployee(id);
-            return Ok(removed);
+            return Ok();
         }
     }
 }
